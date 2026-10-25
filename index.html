@@ -3037,18 +3037,53 @@
     });
 
     // Mask for phone input
+    function formatCarsarPhone(digits) {
+      if (!digits) return '';
+      let res = '+7 (';
+      res += digits.substring(0, Math.min(3, digits.length));
+      if (digits.length > 3) {
+        res += ') ' + digits.substring(3, Math.min(6, digits.length));
+      }
+      if (digits.length > 6) {
+        res += '-' + digits.substring(6, Math.min(8, digits.length));
+      }
+      if (digits.length > 8) {
+        res += '-' + digits.substring(8, 10);
+      }
+      return res;
+    }
+
     const phoneInput = document.getElementById('userPhoneInput');
+
+    phoneInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace' && this.selectionStart === this.selectionEnd) {
+        const pos = this.selectionStart;
+        if (pos > 0 && /[\s\-\)]/.test(this.value[pos - 1])) {
+          e.preventDefault();
+          let cut = pos - 1;
+          while (cut > 0 && /[\s\-\)]/.test(this.value[cut])) {
+            cut--;
+          }
+          let rawBefore = this.value.substring(0, cut).replace(/\D/g, '');
+          if (rawBefore.startsWith('7') || rawBefore.startsWith('8')) rawBefore = rawBefore.substring(1);
+          let rawAfter = this.value.substring(pos).replace(/\D/g, '');
+          let newRaw = (rawBefore + rawAfter).substring(0, 10);
+          this.value = formatCarsarPhone(newRaw);
+        }
+      }
+    });
+
     phoneInput.addEventListener('input', function(e) {
       let val = e.target.value.replace(/\D/g, '');
       if (val.startsWith('7') || val.startsWith('8')) {
         val = val.substring(1);
       }
-      let formatted = '+7 (';
-      if (val.length > 0) formatted += val.substring(0, 3);
-      if (val.length >= 3) formatted += ') ' + val.substring(3, 6);
-      if (val.length >= 6) formatted += '-' + val.substring(6, 8);
-      if (val.length >= 8) formatted += '-' + val.substring(8, 10);
-      e.target.value = formatted;
+      val = val.substring(0, 10);
+      if (val.length === 0) {
+        e.target.value = '';
+        return;
+      }
+      e.target.value = formatCarsarPhone(val);
     });
 
     function handleBookingSubmit(e) {
